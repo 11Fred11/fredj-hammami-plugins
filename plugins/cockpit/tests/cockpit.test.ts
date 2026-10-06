@@ -1,6 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 
-import { agentWindow, ctxColor, ctxLimits, ctxRuns, describeCall, fmtElapsed, fmtTokens, parseLimit, shortModel } from '../hooks/register'
+import { agentWindow, ctxColor, fmtUsd, usageUsd, ctxLimits, ctxRuns, describeCall, fmtElapsed, fmtTokens, parseLimit, shortModel } from '../hooks/register'
 
 const DEFAULTS = ctxLimits('30%', '50%', 200_000)
 
@@ -55,6 +55,17 @@ test('colors context cells: 3 green, 2 amber, the rest red', async () => {
     { color: 'error', cells: '▰▰' },
   ])
   expect(ctxRuns(100, DEFAULTS).map(run => run.cells).join('')).toHaveLength(10)
+})
+
+test('estimates a subagent request at list price', async () => {
+  const call = { input_tokens: 1_000_000, output_tokens: 1_000_000, cache_read_input_tokens: 1_000_000, cache_creation_input_tokens: 1_000_000 }
+  expect(Math.round((usageUsd('claude-haiku-4-5-20251001', call) ?? 0) * 100)).toBe(Math.round((1 + 5 + 0.1 + 1.25) * 100))
+  expect(Math.round((usageUsd('claude-sonnet-5-5', call) ?? 0) * 100)).toBe(Math.round((2 + 10 + 0.2 + 2.5) * 100))
+  expect(Math.round((usageUsd('claude-opus-5-5', call) ?? 0) * 100)).toBe(Math.round((4 + 20 + 0.2 + 5) * 100))
+  expect(Math.round((usageUsd('claude-fable-5-1', call) ?? 0) * 100)).toBe(Math.round((10 + 50 + 0.25 + 12.5) * 100))
+  expect(usageUsd('some-new-model', call)).toBeUndefined()
+  expect(fmtUsd(0.004)).toBe('<$0.01')
+  expect(fmtUsd(1.236)).toBe('$1.24')
 })
 
 test('a subagent gets a 5-cell bar against its own window', async () => {

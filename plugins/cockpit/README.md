@@ -4,13 +4,14 @@ A minimal band above the Claude Code prompt:
 
 ```
 opus 5.5 · high  ctx ▰▰▰▰▱▱▱▱▱▱ 36%  $1.42  2 agents  ▸ Running tests
-● Explore          haiku 4.5        Map the auth flow — Grep session      ▰▱▱▱▱  42k   0:37
-✓ Plan             opus 5.5         Draft migration plan                   ▰▰▱▱▱  61k   2:03
+● Explore  haiku 4.5  ▰▱▱▱▱  42k  $0.04  0:37  Map the auth flow — Grep session
+✓ Plan     opus 5.5   ▰▰▱▱▱  61k  $0.31  2:03  Draft migration plan
 ```
 
 - Main model and effort, context fill (3 green cells, 2 amber, the rest red), session cost, current task.
+- A subagent's cost is an estimate from its own token counts at list prices (cache writes at the 5-minute rate), because Claude Code reports dollars for the whole session only. A model the mod has no price for shows no cost.
 - Makes no model or network calls: every figure comes from the model's own responses and Claude Code's cost ledger.
-- One row per subagent: status, type, model and effort, task and the tool it runs now, a 5-cell context bar colored by the same limits, context size, elapsed time. A subagent on another model than the session's is measured against a 200k window, since Claude Code reports only the main model's.
+- One row per subagent: status, type, model and effort, task and the tool it runs now, a 5-cell context bar colored by the same limits, context size, estimated cost and elapsed time, with the task text last. A subagent on another model than the session's is measured against a 200k window, since Claude Code reports only the main model's.
 - Finished subagents fade off after 20 s; `/cockpit` toggles showing every subagent of the session.
 
 ## Requirements

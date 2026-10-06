@@ -10,6 +10,7 @@ export type CockpitAgent = CockpitLoop & {
   description: string
   status: 'running' | 'done' | 'failed'
   tokens: number
+  usd?: number
   startedAt: number
   endedAt?: number
 }

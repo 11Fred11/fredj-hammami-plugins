@@ -65,6 +65,41 @@ export const ctxRuns = (pct: number, limits: CtxLimits, cells = CTX_CELLS): { co
   return runs
 }
 
+// List prices in $ per million tokens, from the Claude API model table; cache
+// writes at the 5-minute rate. Claude Code reports dollars for the whole
+// session only, so a subagent's cost is estimated from its own token counts.
+type Price = { input: number; output: number; read: number; write: number }
+const PRICES: [family: string, price: Price][] = [
+  ['haiku', { input: 1, output: 5, read: 0.1, write: 1.25 }],
+  ['sonnet', { input: 2, output: 10, read: 0.2, write: 2.5 }],
+  ['opus', { input: 4, output: 20, read: 0.2, write: 5 }],
+  ['fable', { input: 10, output: 50, read: 0.25, write: 12.5 }],
+  ['mythos', { input: 10, output: 50, read: 0.25, write: 12.5 }],
+]
+
+export type CallUsage = {
+  input_tokens: number
+  output_tokens: number
+  cache_read_input_tokens: number
+  cache_creation_input_tokens: number
+}
+
+// One request's cost in dollars; undefined for a model with no known price.
+export const usageUsd = (model: string | undefined, u: CallUsage): number | undefined => {
+  const price = PRICES.find(([family]) => model?.includes(family))?.[1]
+  if (!price) return undefined
+
+  return (
+    (u.input_tokens * price.input +
+      u.output_tokens * price.output +
+      u.cache_read_input_tokens * price.read +
+      u.cache_creation_input_tokens * price.write) /
+    1_000_000
+  )
+}
+
+export const fmtUsd = (usd: number): string => (usd < 0.01 ? '<$0.01' : `$${usd.toFixed(2)}`)
+
 // The window a subagent's context is measured against.
 export const agentWindow = (agentModel: string | undefined, mainModel: string | undefined, mainWindow: number | undefined): number =>
   mainWindow && agentModel && shortModel(agentModel) === shortModel(mainModel) ? mainWindow : ASSUMED_WINDOW
@@ -208,7 +243,12 @@ export const register: Register = (on, options) => {
     const u = result.usage
     if (u && e.agentId !== undefined) {
       const total = u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens + u.output_tokens
-      await update($, agents, list => list.map(a => (a.id === e.agentId ? { ...a, tokens: total } : a)))
+      const usd = usageUsd(u.model ?? e.model, u)
+      await update($, agents, list =>
+        list.map(a =>
+          a.id === e.agentId ? { ...a, tokens: total, usd: usd === undefined ? a.usd : (a.usd ?? 0) + usd } : a,
+        ),
+      )
     }
     await refreshUsage($)
 
@@ -309,8 +349,9 @@ export const register: Register = (on, options) => {
 
     const typeWidth = Math.min(16, Math.max(...shown.map(a => a.type.length), 4))
     const modelWidth = Math.max(...shown.map(a => shortModel(a.model).length + (a.effort ? a.effort.length + 3 : 0)), 4)
-    const fixed = 2 + typeWidth + 1 + modelWidth + 1 + (AGENT_CTX_CELLS + 1) + 6 + 6 + 4
-    const textWidth = Math.max(10, width - fixed)
+    // Name, model, bar and figures sit together on the left, as on the main line; the task takes the rest.
+    const hasCost = shown.some(a => a.usd !== undefined)
+    const costWidth = hasCost ? 7 : 0
 
     return (
       <Box flexDirection="column" width={width}>
@@ -358,10 +399,7 @@ export const register: Register = (on, options) => {
               <Box width={modelWidth + 1} flexShrink={0}>
                 <Text dimColor>{label}</Text>
               </Box>
-              <Box width={textWidth} flexShrink={1}>
-                <Text wrap="truncate-end" dimColor={!isRunning}>{what}</Text>
-              </Box>
-              <Box width={AGENT_CTX_CELLS + 1} flexShrink={0} justifyContent="flex-end">
+              <Box width={AGENT_CTX_CELLS + 1} flexShrink={0}>
                 <Text>
                   <Text color={agentColor} dimColor={!isRunning}>{'▰'.repeat(agentFilled)}</Text>
                   <Text dimColor>{'▱'.repeat(AGENT_CTX_CELLS - agentFilled)}</Text>
@@ -370,8 +408,16 @@ export const register: Register = (on, options) => {
               <Box width={6} flexShrink={0} justifyContent="flex-end">
                 <Text dimColor>{a.tokens ? fmtTokens(a.tokens) : ''}</Text>
               </Box>
+              {hasCost && (
+                <Box width={costWidth} flexShrink={0} justifyContent="flex-end">
+                  <Text dimColor>{a.usd === undefined ? '' : fmtUsd(a.usd)}</Text>
+                </Box>
+              )}
               <Box width={6} flexShrink={0} justifyContent="flex-end">
                 <Text dimColor>{fmtElapsed((a.endedAt ?? at) - a.startedAt)}</Text>
+              </Box>
+              <Box flexShrink={1} marginLeft={2}>
+                <Text wrap="truncate-end" dimColor={!isRunning}>{what}</Text>
               </Box>
             </Box>
           )
