@@ -1,6 +1,7 @@
 {
   "name": "cockpit",
-  "version": "0.2.0",
+  "displayName": "Cockpit",
+  "version": "0.2.1",
   "description": "A quiet band above the prompt: model, effort, context %, cost, current task and live subagents",
   "author": {
     "name": "Fredj Hammami"

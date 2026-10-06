@@ -13,6 +13,11 @@ opus 5.5 · high  ctx ▰▰▰▰▱▱▱▱▱▱ 36%  $1.42  2 agents  ▸ R
 - One row per subagent: status, type, model and effort, task and the tool it runs now, context size, elapsed time.
 - Finished subagents fade off after 20 s; `/cockpit` toggles showing every subagent of the session.
 
+## Requirements
+
+- Claude Code v2.1.287 or later (mods). Tested with v2.1.289.
+- A mod runs in Claude Code only. The band draws in the terminal and in the desktop app's Code tab; claude.ai chat and Cowork skip it.
+
 ## Install
 
 ```
@@ -44,4 +49,4 @@ claude plugin validate plugins/cockpit
 claude plugin test plugins/cockpit
 ```
 
-Built on Claude Code's function-hooks plugin API, which is early access and may change between releases.
+Built on Claude Code's mods API, whose events and methods can change between releases. Develop against the folder with `claude --plugin-dir plugins/cockpit`.

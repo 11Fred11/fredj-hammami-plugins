@@ -1,1 +1,6 @@
-{ "modules": ["./register.tsx"] }
+{
+  "description": "The cockpit hooks module",
+  "modules": [
+    "./register.tsx"
+  ]
+}
