@@ -4,16 +4,16 @@ A Claude Code plugin marketplace of small, quiet mods.
 
 | Plugin | What it does |
 | --- | --- |
-| [agent-hud](plugins/agent-hud) | A band above the prompt: model, effort, context %, cost, current task and live subagents |
+| [cockpit](plugins/cockpit) | A band above the prompt: model, effort, context %, cost, current task and live subagents |
 
 ## Install
 
 ```
 claude plugin marketplace add 11Fred11/claude-mods
-claude plugin install agent-hud@fredj-mods
+claude plugin install cockpit@fredj-mods
 ```
 
-Update later with `claude plugin marketplace update fredj-mods` and `claude plugin update agent-hud@fredj-mods`.
+Update later with `claude plugin marketplace update fredj-mods` and `claude plugin update cockpit@fredj-mods`.
 
 ## Releasing
 

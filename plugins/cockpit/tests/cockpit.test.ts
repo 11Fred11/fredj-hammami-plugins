@@ -5,7 +5,7 @@ import { ctxColor, ctxRuns, describeCall, fmtElapsed, fmtTokens, shortModel } fr
 const SURFACES = ['terminal', 'desktop'] as const
 
 const band = (surface: (typeof SURFACES)[number], isWorking = true) => ({
-  plugin: 'agent-hud',
+  plugin: 'cockpit',
   surface,
   component: 'AbovePrompt' as const,
   props: {
@@ -94,7 +94,7 @@ test('a finished subagent drops off the band after a while', async ($, on) => {
   on('agent.list', () => ({ value: [] }))
   on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: 'a2' }))
   on('turn.complete', () => ({ text: '' }))
-  on('command.register', () => ({ value: { command: 'hud' } }))
+  on('command.register', () => ({ value: { command: 'cockpit' } }))
   on('session.start', ($, e) => ({ cwd: e.cwd }))
 
   await $.agent.spawn(spawn('Fix lint', 'general-purpose'))

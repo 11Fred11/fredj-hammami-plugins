@@ -1,10 +1,10 @@
-export type HudLoop = {
+export type CockpitLoop = {
   model?: string
   effort?: string
   activity?: string
 }
 
-export type HudAgent = HudLoop & {
+export type CockpitAgent = CockpitLoop & {
   id: string
   type: string
   description: string
@@ -14,18 +14,18 @@ export type HudAgent = HudLoop & {
   endedAt?: number
 }
 
-export type HudUsage = {
+export type CockpitUsage = {
   percent?: number
   usd?: number
 }
 
 declare module 'claude-code' {
   interface PluginState {
-    'agent-hud': {
-      main: HudLoop
+    'cockpit': {
+      main: CockpitLoop
       task: string | null
-      agents: HudAgent[]
-      usage: HudUsage
+      agents: CockpitAgent[]
+      usage: CockpitUsage
       now: number
       isExpanded: boolean
     }

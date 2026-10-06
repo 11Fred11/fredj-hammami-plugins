@@ -9,14 +9,14 @@
   },
   "plugins": [
     {
-      "name": "agent-hud",
-      "source": "./plugins/agent-hud",
+      "name": "cockpit",
+      "source": "./plugins/cockpit",
       "description": "A quiet band above the prompt: model, effort, context %, cost, current task and live subagents",
       "version": "0.1.0",
       "author": {
         "name": "Fredj Hammami"
       },
-      "homepage": "https://github.com/11Fred11/claude-mods/tree/main/plugins/agent-hud",
+      "homepage": "https://github.com/11Fred11/claude-mods/tree/main/plugins/cockpit",
       "license": "MIT",
       "keywords": [
         "subagents",

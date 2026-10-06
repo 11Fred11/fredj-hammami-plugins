@@ -1,14 +1,14 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { HudAgent, HudLoop, HudUsage } from '../types'
+import type { CockpitAgent, CockpitLoop, CockpitUsage } from '../types'
 
-const main = atom({ plugin: 'agent-hud', key: 'main' } as const, {})
-const task = atom({ plugin: 'agent-hud', key: 'task' } as const, null)
-const agents = atom({ plugin: 'agent-hud', key: 'agents' } as const, [])
-const usage = atom({ plugin: 'agent-hud', key: 'usage' } as const, {})
-const now = atom({ plugin: 'agent-hud', key: 'now' } as const, 0)
-const isExpanded = atom({ plugin: 'agent-hud', key: 'isExpanded' } as const, false)
+const main = atom({ plugin: 'cockpit', key: 'main' } as const, {})
+const task = atom({ plugin: 'cockpit', key: 'task' } as const, null)
+const agents = atom({ plugin: 'cockpit', key: 'agents' } as const, [])
+const usage = atom({ plugin: 'cockpit', key: 'usage' } as const, {})
+const now = atom({ plugin: 'cockpit', key: 'now' } as const, 0)
+const isExpanded = atom({ plugin: 'cockpit', key: 'isExpanded' } as const, false)
 
 // Finished agents stay on the band this long before they drop off.
 const LINGER_MS = 20_000
@@ -85,7 +85,7 @@ export const describeCall = (tool: string, args: Record<string, unknown>): strin
 
 const loopOf = (agentId: string | undefined) => agentId ?? 'main'
 
-const patchLoop = async ($: EngineInterface, agentId: string | undefined, patch: HudLoop) => {
+const patchLoop = async ($: EngineInterface, agentId: string | undefined, patch: CockpitLoop) => {
   if (agentId === undefined) {
     await update($, main, loop => ({ ...loop, ...patch }))
     return
@@ -95,7 +95,7 @@ const patchLoop = async ($: EngineInterface, agentId: string | undefined, patch:
 
 const refreshUsage = async ($: EngineInterface) => {
   const u = await $.session.usage()
-  const next: HudUsage = { percent: u.context.percent, usd: u.cost?.usd }
+  const next: CockpitUsage = { percent: u.context.percent, usd: u.cost?.usd }
   await update($, usage, () => next)
 }
 
@@ -133,8 +133,8 @@ export const register: Register = on => {
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
-      name: 'hud',
-      description: 'Toggle agent-hud between compact and showing every subagent of this session',
+      name: 'cockpit',
+      description: 'Toggle cockpit between compact and showing every subagent of this session',
       immediate: true,
     })
     // Figures are read from the engine's own ledger, refreshed as each model
@@ -155,11 +155,11 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'hud' }, async $ => {
+  on('command.run', { command: 'cockpit' }, async $ => {
     const was = await read($, isExpanded)
     await update($, isExpanded, () => !was)
 
-    return { text: was ? 'agent-hud: compact' : 'agent-hud: showing every subagent' }
+    return { text: was ? 'cockpit: compact' : 'cockpit: showing every subagent' }
   })
 
   on('turn.step', async function* ($, e, next) {
@@ -178,7 +178,7 @@ export const register: Register = on => {
   on('agent.spawn', async ($, e, next) => {
     const spawned = await next(e)
     if (spawned.agentId && !e.isTeammate) {
-      const agent: HudAgent = {
+      const agent: CockpitAgent = {
         id: spawned.agentId,
         type: e.subagentType,
         description: e.description,
