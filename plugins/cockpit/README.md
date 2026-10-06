@@ -21,7 +21,7 @@ opus 5.5 · high  ctx ▰▰▰▰▱▱▱▱▱▱ 36%  $1.42  2 agents  ▸ R
 ## Install
 
 ```
-claude plugin marketplace add 11Fred11/claude-mods
+claude plugin marketplace add 11Fred11/fredj-hammami-plugins
 claude plugin install cockpit@fredj-hammami
 ```
 

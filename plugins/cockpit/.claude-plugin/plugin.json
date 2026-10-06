@@ -1,7 +1,7 @@
 {
   "name": "cockpit",
   "displayName": "Cockpit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A quiet band above the prompt: model, effort, context %, cost, current task and live subagents",
   "author": {
     "name": "Fredj Hammami"
@@ -15,8 +15,8 @@
     "hud"
   ],
   "types": "./types/index.d.ts",
-  "homepage": "https://github.com/11Fred11/claude-mods/tree/main/plugins/cockpit",
-  "repository": "https://github.com/11Fred11/claude-mods",
+  "homepage": "https://github.com/11Fred11/fredj-hammami-plugins/tree/main/plugins/cockpit",
+  "repository": "https://github.com/11Fred11/fredj-hammami-plugins",
   "userConfig": {
     "warnAt": {
       "type": "string",

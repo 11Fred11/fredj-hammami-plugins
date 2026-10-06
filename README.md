@@ -1,4 +1,4 @@
-# claude-mods
+# fredj-hammami-plugins
 
 A Claude Code plugin marketplace of small, quiet mods.
 
@@ -9,7 +9,7 @@ A Claude Code plugin marketplace of small, quiet mods.
 ## Install
 
 ```
-claude plugin marketplace add 11Fred11/claude-mods
+claude plugin marketplace add 11Fred11/fredj-hammami-plugins
 claude plugin install cockpit@fredj-hammami
 ```
 
