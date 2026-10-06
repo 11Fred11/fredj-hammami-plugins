@@ -1,5 +1,5 @@
 {
-  "name": "fredj-mods",
+  "name": "fredj-hammami",
   "owner": {
     "name": "Fredj Hammami"
   },
@@ -21,8 +21,5 @@
         "hud"
       ]
     }
-  ],
-  "renames": {
-    "agent-hud": "cockpit"
-  }
+  ]
 }

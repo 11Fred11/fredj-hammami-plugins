@@ -22,17 +22,17 @@ opus 5.5 · high  ctx ▰▰▰▰▱▱▱▱▱▱ 36%  $1.42  2 agents  ▸ R
 
 ```
 claude plugin marketplace add 11Fred11/claude-mods
-claude plugin install cockpit@fredj-mods
+claude plugin install cockpit@fredj-hammami
 ```
 
 Then restart Claude Code, or run `/reload-plugins` in a running session.
 
 ## Settings
 
-Set where the context bar turns amber and red with `/plugin configure cockpit@fredj-mods` in Claude Code, or from a shell:
+Set where the context bar turns amber and red with `/plugin configure cockpit@fredj-hammami` in Claude Code, or from a shell:
 
 ```
-echo '{"warnAt": "40%", "dangerAt": "120k"}' | claude plugin configure cockpit@fredj-mods --values-stdin
+echo '{"warnAt": "40%", "dangerAt": "120k"}' | claude plugin configure cockpit@fredj-hammami --values-stdin
 ```
 
 | Setting | Default | Accepts |

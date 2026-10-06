@@ -10,10 +10,10 @@ A Claude Code plugin marketplace of small, quiet mods.
 
 ```
 claude plugin marketplace add 11Fred11/claude-mods
-claude plugin install cockpit@fredj-mods
+claude plugin install cockpit@fredj-hammami
 ```
 
-Update later with `claude plugin marketplace update fredj-mods` and `claude plugin update cockpit@fredj-mods`.
+Update later with `claude plugin marketplace update fredj-hammami` and `claude plugin update cockpit@fredj-hammami`.
 
 ## Releasing
 
@@ -22,4 +22,4 @@ Update later with `claude plugin marketplace update fredj-mods` and `claude plug
 3. `claude plugin validate --strict plugins/<name>`, then commit and push.
 4. Optionally tag it: `claude plugin tag plugins/<name> --push`.
 
-Never change a published plugin's `name`; set `displayName` for a new label. A rename needs an entry under `renames` in `marketplace.json`, as `agent-hud` → `cockpit` has.
+Never change a published plugin's `name`; set `displayName` for a new label. A rename needs an entry under `renames` in `marketplace.json`.
