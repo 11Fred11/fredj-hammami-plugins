@@ -1,6 +1,8 @@
 import { expect, mock, test } from 'claude-code/testing'
 
-import { ctxColor, ctxRuns, describeCall, fmtElapsed, fmtTokens, shortModel } from '../hooks/register'
+import { ctxColor, ctxLimits, ctxRuns, describeCall, fmtElapsed, fmtTokens, parseLimit, shortModel } from '../hooks/register'
+
+const DEFAULTS = ctxLimits('30%', '50%', 200_000)
 
 const SURFACES = ['terminal', 'desktop'] as const
 
@@ -42,17 +44,45 @@ test('formats models, tokens, time and tool calls compactly', async () => {
 })
 
 test('colors context cells: 3 green, 2 amber, the rest red', async () => {
-  expect(ctxColor(29)).toBe('success')
-  expect(ctxColor(30)).toBe('warning')
-  expect(ctxColor(50)).toBe('error')
-  expect(ctxRuns(0)).toEqual([])
-  expect(ctxRuns(28)).toEqual([{ color: 'success', cells: '▰▰▰' }])
-  expect(ctxRuns(72)).toEqual([
+  expect(ctxColor(29, DEFAULTS)).toBe('success')
+  expect(ctxColor(30, DEFAULTS)).toBe('warning')
+  expect(ctxColor(50, DEFAULTS)).toBe('error')
+  expect(ctxRuns(0, DEFAULTS)).toEqual([])
+  expect(ctxRuns(28, DEFAULTS)).toEqual([{ color: 'success', cells: '▰▰▰' }])
+  expect(ctxRuns(72, DEFAULTS)).toEqual([
     { color: 'success', cells: '▰▰▰' },
     { color: 'warning', cells: '▰▰' },
     { color: 'error', cells: '▰▰' },
   ])
-  expect(ctxRuns(100).map(run => run.cells).join('')).toHaveLength(10)
+  expect(ctxRuns(100, DEFAULTS).map(run => run.cells).join('')).toHaveLength(10)
+})
+
+test('reads limits as a share of the window or as a token count', async () => {
+  expect(parseLimit('40%', 200_000)).toBe(40)
+  expect(parseLimit('40', 200_000)).toBe(40)
+  expect(parseLimit('100k', 200_000)).toBe(50)
+  expect(parseLimit('100k', 1_000_000)).toBe(10)
+  expect(parseLimit('1.2m', 2_000_000)).toBe(60)
+  expect(parseLimit('120000', 1_000_000)).toBe(12)
+  expect(parseLimit('lots', 200_000)).toBeUndefined()
+  // Unreadable values fall back to the defaults; amber never sits past red.
+  expect(ctxLimits('lots', '', 200_000)).toEqual({ warn: 30, danger: 50 })
+  expect(ctxLimits('70%', '50%', 200_000)).toEqual({ warn: 50, danger: 50 })
+})
+
+test('draws the bar against the limits the person set', { options: { warnAt: '20k', dangerAt: '40k' } }, async ($, on) => {
+  mock.clock(on, { now: 1_000_000 })
+  on('session.usage', () => ({
+    value: { startedAt: 0, context: { tokens: 50_000, window: 1_000_000, percent: 5 }, rateLimits: [] },
+  }))
+  on('agent.list', () => ({ value: [] }))
+  on('turn.complete', () => ({ text: '' }))
+  await $.turn.complete({ answer: '', durationMs: 1, turnId: 't1', reason: 'answer', isAborted: false })
+
+  // 5% of a 1M window is 50k tokens: past the 40k red limit.
+  const ui = await $.ui.mount(band('terminal'))
+  const label = (await ui.findAll({ type: 'Text', text: /5%/ })).find(el => el.text.trim() === '5%')
+  expect(label?.props.color).toBe('error')
 })
 
 test('draws context, cost, the current task and a running subagent', async ($, on) => {

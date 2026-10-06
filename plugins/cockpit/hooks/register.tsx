@@ -13,20 +13,45 @@ const isExpanded = atom({ plugin: 'cockpit', key: 'isExpanded' } as const, false
 // Finished agents stay on the band this long before they drop off.
 const LINGER_MS = 20_000
 const MAX_AGENT_ROWS = 6
-// Context fill: 3 green cells, 2 amber (time to /compact), the rest red.
-const CTX_WARN_PCT = 30
-const CTX_DANGER_PCT = 50
 const CTX_CELLS = 10
+const DEFAULT_WARN_AT = '30%'
+const DEFAULT_DANGER_AT = '50%'
 
-export const ctxColor = (pct: number): string =>
-  pct >= CTX_DANGER_PCT ? 'error' : pct >= CTX_WARN_PCT ? 'warning' : 'success'
+// Where the context bar turns amber and red, as percentages of the window.
+export type CtxLimits = { warn: number; danger: number }
 
-// The filled cells in runs of one color, each cell colored by the share it stands for.
-export const ctxRuns = (pct: number): { color: string; cells: string }[] => {
-  const filled = Math.min(CTX_CELLS, Math.round(pct / (100 / CTX_CELLS)))
+// A limit as the person wrote it: "30%" (or a bare 30) is a share of the
+// window; "120k", "1.2m" or a bare 120000 a token count, which holds still
+// when a model with a larger window comes in.
+export const parseLimit = (text: string, window: number | undefined): number | undefined => {
+  const match = /^\s*(\d+(?:\.\d+)?)\s*(%|k|m)?\s*$/i.exec(text)
+  if (!match) return undefined
+  const n = Number(match[1])
+  const unit = match[2]?.toLowerCase() ?? (n <= 100 ? '%' : '')
+  if (unit === '%') return n
+  if (!window) return undefined
+  const tokens = unit === 'k' ? n * 1_000 : unit === 'm' ? n * 1_000_000 : n
+
+  return (tokens / window) * 100
+}
+
+export const ctxLimits = (warnAt: string, dangerAt: string, window: number | undefined): CtxLimits => {
+  const danger = parseLimit(dangerAt, window) ?? parseLimit(DEFAULT_DANGER_AT, window)!
+  const warn = parseLimit(warnAt, window) ?? parseLimit(DEFAULT_WARN_AT, window)!
+
+  return { warn: Math.min(warn, danger), danger }
+}
+
+export const ctxColor = (pct: number, limits: CtxLimits): string =>
+  pct >= limits.danger ? 'error' : pct >= limits.warn ? 'warning' : 'success'
+
+// The filled cells in runs of one color, each cell colored by the share at its middle.
+export const ctxRuns = (pct: number, limits: CtxLimits): { color: string; cells: string }[] => {
+  const step = 100 / CTX_CELLS
+  const filled = Math.min(CTX_CELLS, Math.round(pct / step))
   const runs: { color: string; cells: string }[] = []
   for (let i = 0; i < filled; i++) {
-    const color = ctxColor((i * 100) / CTX_CELLS)
+    const color = ctxColor((i + 0.5) * step, limits)
     const last = runs[runs.length - 1]
     if (last?.color === color) last.cells += '▰'
     else runs.push({ color, cells: '▰' })
@@ -95,7 +120,7 @@ const patchLoop = async ($: EngineInterface, agentId: string | undefined, patch:
 
 const refreshUsage = async ($: EngineInterface) => {
   const u = await $.session.usage()
-  const next: CockpitUsage = { percent: u.context.percent, usd: u.cost?.usd }
+  const next: CockpitUsage = { percent: u.context.percent, window: u.context.window, usd: u.cost?.usd }
   await update($, usage, () => next)
 }
 
@@ -128,7 +153,10 @@ const syncAgents = async ($: EngineInterface) => {
   })
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const warnAt = String(options.warnAt ?? DEFAULT_WARN_AT)
+  const dangerAt = String(options.dangerAt ?? DEFAULT_DANGER_AT)
+
   const taskTitles = new Map<string, string>()
 
   on('session.start', async ($, e, next) => {
@@ -254,7 +282,8 @@ export const register: Register = on => {
     const running = list.filter(a => a.status === 'running').length
 
     const pct = u.percent
-    const runs = pct === undefined ? [] : ctxRuns(pct)
+    const limits = ctxLimits(warnAt, dangerAt, u.window)
+    const runs = pct === undefined ? [] : ctxRuns(pct, limits)
     const filled = runs.reduce((n, run) => n + run.cells.length, 0)
     const doing = current ?? (e.props.isWorking ? loop.activity : undefined)
 
@@ -278,7 +307,7 @@ export const register: Register = on => {
               <Text color={run.color}>{run.cells}</Text>
             ))}
             <Text dimColor>{'▱'.repeat(CTX_CELLS - filled)}</Text>
-            <Text color={pct === undefined ? undefined : ctxColor(pct)}> {pct === undefined ? '–' : `${pct}%`}</Text>
+            <Text color={pct === undefined ? undefined : ctxColor(pct, limits)}> {pct === undefined ? '–' : `${pct}%`}</Text>
           </Text>
           {u.usd !== undefined && <Text dimColor>${u.usd.toFixed(2)}</Text>}
           {running > 0 && <Text color="claude">{running} agent{running === 1 ? '' : 's'}</Text>}

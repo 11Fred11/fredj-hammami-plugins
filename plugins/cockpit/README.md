@@ -22,13 +22,26 @@ claude plugin install cockpit@fredj-mods
 
 Then restart Claude Code, or run `/reload-plugins` in a running session.
 
+## Settings
+
+Set where the context bar turns amber and red with `/plugin configure cockpit@fredj-mods` in Claude Code, or from a shell:
+
+```
+echo '{"warnAt": "40%", "dangerAt": "120k"}' | claude plugin configure cockpit@fredj-mods --values-stdin
+```
+
+| Setting | Default | Accepts |
+| --- | --- | --- |
+| `warnAt`: context amber from | `30%` | a share of the window (`40%`), or a token count (`80k`, `1.2m`) |
+| `dangerAt`: context red from | `50%` | the same |
+
+A percentage moves with the model's window. A token count stays put when you switch to a model with a larger window.
+
 ## Develop
 
 ```
 claude plugin validate plugins/cockpit
 claude plugin test plugins/cockpit
 ```
-
-The context thresholds are `CTX_WARN_PCT` and `CTX_DANGER_PCT` at the top of `hooks/register.tsx`.
 
 Built on Claude Code's function-hooks plugin API, which is early access and may change between releases.

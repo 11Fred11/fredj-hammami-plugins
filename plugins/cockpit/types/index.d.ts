@@ -16,6 +16,7 @@ export type CockpitAgent = CockpitLoop & {
 
 export type CockpitUsage = {
   percent?: number
+  window?: number
   usd?: number
 }
 

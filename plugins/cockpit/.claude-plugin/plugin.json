@@ -1,6 +1,6 @@
 {
   "name": "cockpit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A quiet band above the prompt: model, effort, context %, cost, current task and live subagents",
   "author": {
     "name": "Fredj Hammami"
@@ -15,5 +15,19 @@
   ],
   "types": "./types/index.d.ts",
   "homepage": "https://github.com/11Fred11/claude-mods/tree/main/plugins/cockpit",
-  "repository": "https://github.com/11Fred11/claude-mods"
+  "repository": "https://github.com/11Fred11/claude-mods",
+  "userConfig": {
+    "warnAt": {
+      "type": "string",
+      "title": "Context amber from",
+      "description": "Where the context bar turns amber (time to /compact): a share of the window like 30%, or a token count like 60k that stays put across models with different windows.",
+      "default": "30%"
+    },
+    "dangerAt": {
+      "type": "string",
+      "title": "Context red from",
+      "description": "Where the context bar turns red: a share of the window like 50%, or a token count like 100k or 1.2m.",
+      "default": "50%"
+    }
+  }
 }
