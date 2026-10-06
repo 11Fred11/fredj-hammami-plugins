@@ -125,6 +125,7 @@ test('a finished subagent drops off the band after a while', async ($, on) => {
   on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: 'a2' }))
   on('turn.complete', () => ({ text: '' }))
   on('command.register', () => ({ value: { command: 'cockpit' } }))
+  on('session.model', () => ({ value: 'claude-opus-5-5' }))
   on('session.start', ($, e) => ({ cwd: e.cwd }))
 
   await $.agent.spawn(spawn('Fix lint', 'general-purpose'))
@@ -133,7 +134,9 @@ test('a finished subagent drops off the band after a while', async ($, on) => {
   const ui = await $.ui.mount(band('terminal', false))
   expect(await ui.find({ text: /✓/ })).toBeDefined()
 
+  // The model shows from the session's start, before any response.
   await $.session.start({ cwd: '/tmp', surface: 'terminal', isInteractive: true })
+  expect(await ui.find({ text: /opus 5\.5/ })).toBeDefined()
   await clock.advance(25_000)
   expect(await ui.find({ text: /Fix lint/ })).toBeUndefined()
 })

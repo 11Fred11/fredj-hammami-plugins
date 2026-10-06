@@ -169,6 +169,9 @@ export const register: Register = (on, options) => {
     // response lands; nothing here polls or calls the API.
     await refreshUsage($)
     await syncAgents($)
+    // The model is known before the first response; effort arrives with it.
+    const model = await $.session.model()
+    await update($, main, loop => (loop.model ? loop : { ...loop, model }))
 
     // Only moves the elapsed-time column while a subagent row is on screen.
     $.clock.every(1000, () => {
