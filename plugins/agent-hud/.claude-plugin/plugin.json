@@ -1,0 +1,19 @@
+{
+  "name": "agent-hud",
+  "version": "0.1.0",
+  "description": "A quiet band above the prompt: model, effort, context %, cost, current task and live subagents",
+  "author": {
+    "name": "Fredj Hammami"
+  },
+  "license": "MIT",
+  "keywords": [
+    "subagents",
+    "context",
+    "cost",
+    "statusline",
+    "hud"
+  ],
+  "types": "./types/index.d.ts",
+  "homepage": "https://github.com/11Fred11/claude-mods/tree/main/plugins/agent-hud",
+  "repository": "https://github.com/11Fred11/claude-mods"
+}

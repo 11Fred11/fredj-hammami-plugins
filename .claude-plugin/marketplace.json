@@ -1,0 +1,29 @@
+{
+  "name": "fredj-mods",
+  "owner": {
+    "name": "Fredj Hammami"
+  },
+  "metadata": {
+    "description": "Small, quiet Claude Code mods by Fredj Hammami",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "agent-hud",
+      "source": "./plugins/agent-hud",
+      "description": "A quiet band above the prompt: model, effort, context %, cost, current task and live subagents",
+      "version": "0.1.0",
+      "author": {
+        "name": "Fredj Hammami"
+      },
+      "homepage": "https://github.com/11Fred11/claude-mods/tree/main/plugins/agent-hud",
+      "license": "MIT",
+      "keywords": [
+        "subagents",
+        "context",
+        "cost",
+        "hud"
+      ]
+    }
+  ]
+}
