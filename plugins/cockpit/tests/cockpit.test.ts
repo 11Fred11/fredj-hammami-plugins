@@ -1,6 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 
-import { ctxColor, ctxLimits, ctxRuns, describeCall, fmtElapsed, fmtTokens, parseLimit, shortModel } from '../hooks/register'
+import { agentWindow, ctxColor, ctxLimits, ctxRuns, describeCall, fmtElapsed, fmtTokens, parseLimit, shortModel } from '../hooks/register'
 
 const DEFAULTS = ctxLimits('30%', '50%', 200_000)
 
@@ -55,6 +55,19 @@ test('colors context cells: 3 green, 2 amber, the rest red', async () => {
     { color: 'error', cells: '▰▰' },
   ])
   expect(ctxRuns(100, DEFAULTS).map(run => run.cells).join('')).toHaveLength(10)
+})
+
+test('a subagent gets a 5-cell bar against its own window', async () => {
+  expect(agentWindow('claude-opus-5-5', 'claude-opus-5-5', 1_000_000)).toBe(1_000_000)
+  expect(agentWindow('claude-haiku-4-5-20251001', 'claude-opus-5-5', 1_000_000)).toBe(200_000)
+  expect(agentWindow(undefined, 'claude-opus-5-5', 1_000_000)).toBe(200_000)
+  // 12k of 200k is 6%: any context fills one cell.
+  expect(ctxRuns(6, DEFAULTS, 5)).toEqual([{ color: 'success', cells: '▰' }])
+  expect(ctxRuns(80, DEFAULTS, 5)).toEqual([
+    { color: 'success', cells: '▰' },
+    { color: 'warning', cells: '▰' },
+    { color: 'error', cells: '▰▰' },
+  ])
 })
 
 test('reads limits as a share of the window or as a token count', async () => {

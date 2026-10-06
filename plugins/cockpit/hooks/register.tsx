@@ -14,6 +14,10 @@ const isExpanded = atom({ plugin: 'cockpit', key: 'isExpanded' } as const, false
 const LINGER_MS = 20_000
 const MAX_AGENT_ROWS = 6
 const CTX_CELLS = 10
+const AGENT_CTX_CELLS = 5
+// Claude Code reports the main model's window alone; a subagent on another
+// model is measured against the window most models have.
+const ASSUMED_WINDOW = 200_000
 const DEFAULT_WARN_AT = '30%'
 const DEFAULT_DANGER_AT = '50%'
 
@@ -45,10 +49,11 @@ export const ctxLimits = (warnAt: string, dangerAt: string, window: number | und
 export const ctxColor = (pct: number, limits: CtxLimits): string =>
   pct >= limits.danger ? 'error' : pct >= limits.warn ? 'warning' : 'success'
 
-// The filled cells in runs of one color, each cell colored by the share at its middle.
-export const ctxRuns = (pct: number, limits: CtxLimits): { color: string; cells: string }[] => {
-  const step = 100 / CTX_CELLS
-  const filled = Math.min(CTX_CELLS, Math.round(pct / step))
+// The filled cells in runs of one color, each cell colored by the share at its
+// middle; any context at all fills one cell.
+export const ctxRuns = (pct: number, limits: CtxLimits, cells = CTX_CELLS): { color: string; cells: string }[] => {
+  const step = 100 / cells
+  const filled = pct > 0 ? Math.max(1, Math.min(cells, Math.round(pct / step))) : 0
   const runs: { color: string; cells: string }[] = []
   for (let i = 0; i < filled; i++) {
     const color = ctxColor((i + 0.5) * step, limits)
@@ -59,6 +64,10 @@ export const ctxRuns = (pct: number, limits: CtxLimits): { color: string; cells:
 
   return runs
 }
+
+// The window a subagent's context is measured against.
+export const agentWindow = (agentModel: string | undefined, mainModel: string | undefined, mainWindow: number | undefined): number =>
+  mainWindow && agentModel && shortModel(agentModel) === shortModel(mainModel) ? mainWindow : ASSUMED_WINDOW
 
 export const shortModel = (id: string | undefined): string => {
   if (!id) return ''
@@ -251,6 +260,14 @@ export const register: Register = (on, options) => {
     return ran
   })
 
+  // /model, the picker or a fallback: show the new model before its first response.
+  on('classic.PostModelSwitch', async ($, e, next) => {
+    await update($, main, loop => ({ ...loop, model: e.to_model, effort: undefined }))
+    await refreshUsage($)
+
+    return next(e)
+  })
+
   on('turn.complete', async ($, e, next) => {
     const done = await next(e)
     if (e.agentId === undefined) {
@@ -292,7 +309,7 @@ export const register: Register = (on, options) => {
 
     const typeWidth = Math.min(16, Math.max(...shown.map(a => a.type.length), 4))
     const modelWidth = Math.max(...shown.map(a => shortModel(a.model).length + (a.effort ? a.effort.length + 3 : 0)), 4)
-    const fixed = 2 + typeWidth + 1 + modelWidth + 1 + 6 + 6 + 4
+    const fixed = 2 + typeWidth + 1 + modelWidth + 1 + (AGENT_CTX_CELLS + 1) + 6 + 6 + 4
     const textWidth = Math.max(10, width - fixed)
 
     return (
@@ -326,6 +343,11 @@ export const register: Register = (on, options) => {
           const markColor = isRunning ? 'claude' : a.status === 'done' ? 'success' : 'error'
           const label = `${shortModel(a.model)}${a.effort ? ` · ${a.effort}` : ''}`
           const what = isRunning && a.activity ? `${a.description} — ${a.activity}` : a.description
+          const agentLimits = ctxLimits(warnAt, dangerAt, agentWindow(a.model, loop.model, u.window))
+          const agentPct = (a.tokens / agentWindow(a.model, loop.model, u.window)) * 100
+          // Too few cells to color by position: the whole bar takes the current level's color.
+          const agentFilled = ctxRuns(agentPct, agentLimits, AGENT_CTX_CELLS).reduce((n, run) => n + run.cells.length, 0)
+          const agentColor = ctxColor(agentPct, agentLimits)
 
           return (
             <Box key={a.id}>
@@ -338,6 +360,12 @@ export const register: Register = (on, options) => {
               </Box>
               <Box width={textWidth} flexShrink={1}>
                 <Text wrap="truncate-end" dimColor={!isRunning}>{what}</Text>
+              </Box>
+              <Box width={AGENT_CTX_CELLS + 1} flexShrink={0} justifyContent="flex-end">
+                <Text>
+                  <Text color={agentColor} dimColor={!isRunning}>{'▰'.repeat(agentFilled)}</Text>
+                  <Text dimColor>{'▱'.repeat(AGENT_CTX_CELLS - agentFilled)}</Text>
+                </Text>
               </Box>
               <Box width={6} flexShrink={0} justifyContent="flex-end">
                 <Text dimColor>{a.tokens ? fmtTokens(a.tokens) : ''}</Text>

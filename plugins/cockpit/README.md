@@ -4,13 +4,13 @@ A minimal band above the Claude Code prompt:
 
 ```
 opus 5.5 · high  ctx ▰▰▰▰▱▱▱▱▱▱ 36%  $1.42  2 agents  ▸ Running tests
-● Explore          haiku 4.5        Map the auth flow — Grep session      42k   0:37
-✓ Plan             opus 5.5         Draft migration plan                   61k   2:03
+● Explore          haiku 4.5        Map the auth flow — Grep session      ▰▱▱▱▱  42k   0:37
+✓ Plan             opus 5.5         Draft migration plan                   ▰▰▱▱▱  61k   2:03
 ```
 
 - Main model and effort, context fill (3 green cells, 2 amber, the rest red), session cost, current task.
 - Makes no model or network calls: every figure comes from the model's own responses and Claude Code's cost ledger.
-- One row per subagent: status, type, model and effort, task and the tool it runs now, context size, elapsed time.
+- One row per subagent: status, type, model and effort, task and the tool it runs now, a 5-cell context bar colored by the same limits, context size, elapsed time. A subagent on another model than the session's is measured against a 200k window, since Claude Code reports only the main model's.
 - Finished subagents fade off after 20 s; `/cockpit` toggles showing every subagent of the session.
 
 ## Requirements
